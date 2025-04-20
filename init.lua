@@ -1035,11 +1035,31 @@ require('lazy').setup({
         --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
         --  - settings (table): Override the default settings passed when initializing the server.
         --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
+
+        local current_dir = vim.fn.getcwd()
+        local project_configs = {
+          ['/home/kvelmuru/workSpace_jlr/programs/jlr/my2023/cccm/gp-apps/gp-dim-mgr-app'] = '/home/kvelmuru/workSpace_jlr/programs/jlr/my2023/cccm/gp-apps/gp-dim-mgr-app/tst/CMakeFiles/build',
+          ['/mnt/c/Users/kvelmuru/pico/test'] = '/mnt/c/Users/kvelmuru/pico/test/build',
+          ['/home/kvelmuru/zephyrproject/projects/hellow_world'] = '/home/kvelmuru/zephyrproject/projects/hellow_world/build',
+          ['/home/kvelmuru/workSpace_jlr/programs/jlr/my2023/cccm/gp-apps/gp-fca-app'] = '/home/kvelmuru/workSpace_jlr/programs/jlr/my2023/cccm/gp-apps/gp-fca-app/tests/CMakeFiles/build',
+        }
+        local clangd_complier_file_path = '/home/kvelmuru/workSpace_jlr/programs/jlr/my2023/cccm/gp-apps/gp-dim-mgr-app/tst/CMakeFiles/build'
+
+        for project_dir, compile_commands_dir in pairs(project_configs) do
+          -- Check if the current directory is within a project directory
+          if string.find(current_dir, project_dir, 1, true) then
+            clangd_complier_file_path = compile_commands_dir
+            break -- Stop searching once a matching project is found
+          end
+        end
         local servers = {
 
           clangd = {
+
             cmd = {
               '/usr/bin/clangd',
+
+              '--compile-commands-dir=' .. clangd_complier_file_path,
               -- '--compile-commands-dir=/mnt/c/Users/kvelmuru/pico/test/build',
               --'--compile-commands-dir=/home/kvelmuru/zephyrproject/projects/hellow_world/build',
             },
@@ -1116,7 +1136,7 @@ require('lazy').setup({
 
     { -- Autoformat
       'stevearc/conform.nvim',
-      event = { 'BufWritePre' },
+      --event = { 'BufWritePre' },
       cmd = { 'ConformInfo' },
       keys = {
         {
