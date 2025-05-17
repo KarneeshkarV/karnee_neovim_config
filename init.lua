@@ -21,15 +21,13 @@ vim.keymap.set('n', '-', '<cmd>Oil<CR>>')
 vim.opt.clipboard:append 'unnamedplus'
 vim.opt.showmode = false
 local function has_wayland_clipboard()
-  return vim.fn.exists('$WAYLAND_DISPLAY') == 1
-     and vim.fn.executable('wl-copy') == 1
-     and vim.fn.executable('wl-paste') == 1
+  return vim.fn.exists '$WAYLAND_DISPLAY' == 1 and vim.fn.executable 'wl-copy' == 1 and vim.fn.executable 'wl-paste' == 1
 end
 
 -- Function to check for X11 clipboard tools
 local function has_x11_clipboard()
-   -- Prioritize xclip, but you could add checks for xsel too
-  return vim.fn.executable('xclip') == 1
+  -- Prioritize xclip, but you could add checks for xsel too
+  return vim.fn.executable 'xclip' == 1
   -- Example check for xsel:
   -- return vim.fn.executable('xclip') == 1 or vim.fn.executable('xsel') == 1
 end
@@ -42,58 +40,57 @@ local clipboard_config = {
 }
 
 -- Detect OS and set clipboard commands accordingly
-if vim.fn.has('wsl') == 1 then
+if vim.fn.has 'wsl' == 1 then
   -- WSL (Windows Subsystem for Linux) - Use Windows executables
   clipboard_config.name = 'WslClipboard'
   clipboard_config.copy['+'] = 'clip.exe'
   clipboard_config.copy['*'] = 'clip.exe' -- Often map both registers to the system clipboard
   -- Use powershell to get clipboard content, removing potential carriage returns (`r)
   -- Added -ExecutionPolicy RemoteSigned for robustness, though often not strictly needed for Get-Clipboard
-  clipboard_config.paste['+'] = 'powershell.exe -NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))'
-  clipboard_config.paste['*'] = 'powershell.exe -NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))'
-
-elseif vim.fn.has('macunix') == 1 then
+  clipboard_config.paste['+'] =
+    'powershell.exe -NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))'
+  clipboard_config.paste['*'] =
+    'powershell.exe -NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))'
+elseif vim.fn.has 'macunix' == 1 then
   -- macOS - Use standard pbcopy/pbpaste
   clipboard_config.name = 'MacOSClipboard'
   clipboard_config.copy['+'] = 'pbcopy'
   clipboard_config.copy['*'] = 'pbcopy' -- Map both to pbcopy
   clipboard_config.paste['+'] = 'pbpaste'
   clipboard_config.paste['*'] = 'pbpaste' -- Map both to pbpaste
-
-elseif vim.fn.has('unix') == 1 then
+elseif vim.fn.has 'unix' == 1 then
   -- Generic Unix (Likely Linux, *BSD)
   if has_wayland_clipboard() then
     -- Linux/Unix with Wayland clipboard tools (wl-copy/wl-paste)
-     clipboard_config.name = 'WaylandClipboard'
-     clipboard_config.copy['+'] = 'wl-copy'
-     clipboard_config.copy['*'] = 'wl-copy' -- Map both to wl-copy
-     clipboard_config.paste['+'] = 'wl-paste -n' -- Use -n to prevent adding a trailing newline
-     clipboard_config.paste['*'] = 'wl-paste -n' -- Map both to wl-paste
-
+    clipboard_config.name = 'WaylandClipboard'
+    clipboard_config.copy['+'] = 'wl-copy'
+    clipboard_config.copy['*'] = 'wl-copy' -- Map both to wl-copy
+    clipboard_config.paste['+'] = 'wl-paste -n' -- Use -n to prevent adding a trailing newline
+    clipboard_config.paste['*'] = 'wl-paste -n' -- Map both to wl-paste
   elseif has_x11_clipboard() then
-     -- Linux/Unix with X11 clipboard tools (using xclip)
-     clipboard_config.name = 'XclipClipboard'
-     clipboard_config.copy['+'] = 'xclip -selection clipboard -in' -- Specify "in" for copy
-     clipboard_config.copy['*'] = 'xclip -selection clipboard -in' -- Map both to system clipboard
-     clipboard_config.paste['+'] = 'xclip -selection clipboard -out' -- Specify "out" for paste
-     clipboard_config.paste['*'] = 'xclip -selection clipboard -out' -- Map both
+    -- Linux/Unix with X11 clipboard tools (using xclip)
+    clipboard_config.name = 'XclipClipboard'
+    clipboard_config.copy['+'] = 'xclip -selection clipboard -in' -- Specify "in" for copy
+    clipboard_config.copy['*'] = 'xclip -selection clipboard -in' -- Map both to system clipboard
+    clipboard_config.paste['+'] = 'xclip -selection clipboard -out' -- Specify "out" for paste
+    clipboard_config.paste['*'] = 'xclip -selection clipboard -out' -- Map both
 
-     -- Alternative using xsel (if you prefer/install that):
-     -- clipboard_config.copy['+'] = 'xsel --clipboard --input'
-     -- clipboard_config.copy['*'] = 'xsel --clipboard --input'
-     -- clipboard_config.paste['+'] = 'xsel --clipboard --output'
-     -- clipboard_config.paste['*'] = 'xsel --clipboard --output'
+    -- Alternative using xsel (if you prefer/install that):
+    -- clipboard_config.copy['+'] = 'xsel --clipboard --input'
+    -- clipboard_config.copy['*'] = 'xsel --clipboard --input'
+    -- clipboard_config.paste['+'] = 'xsel --clipboard --output'
+    -- clipboard_config.paste['*'] = 'xsel --clipboard --output'
   else
     -- Fallback if no recognized clipboard tool is found on Unix/Linux
-    print("Warning: No supported clipboard tool found (wl-copy/wl-paste or xclip/xsel). Neovim clipboard integration might be limited.")
+    print 'Warning: No supported clipboard tool found (wl-copy/wl-paste or xclip/xsel). Neovim clipboard integration might be limited.'
     -- Set to nil so Neovim might use internal fallbacks or defaults if available
     clipboard_config = nil
   end
 else
-   -- Fallback for other potential OSes or configurations (e.g., native Windows without WSL)
-   print("Warning: Unsupported OS for this custom clipboard configuration. Neovim clipboard integration might be limited.")
-   -- Set to nil so Neovim might use internal fallbacks or defaults if available
-   clipboard_config = nil
+  -- Fallback for other potential OSes or configurations (e.g., native Windows without WSL)
+  print 'Warning: Unsupported OS for this custom clipboard configuration. Neovim clipboard integration might be limited.'
+  -- Set to nil so Neovim might use internal fallbacks or defaults if available
+  clipboard_config = nil
 end
 
 -- Only assign vim.g.clipboard if a valid configuration was determined
@@ -111,16 +108,16 @@ end
 -- if you want system clipboard (`+` register) to be the default for yank/paste
 -- vim.opt.clipboard = 'unnamedplus' -- or 'unnamed'
 --[[vim.g.clipboard = {]]
-  --[[name = 'WslClipboard',]]
-  --[[copy = {]]
-    --[[['+'] = 'clip.exe',]]
-    --[[['*'] = 'clip.exe',]]
-  --[[},]]
-  --[[paste = {]]
-    --[[['+'] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',]]
-    --[[['*'] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',]]
-  --[[},]]
-  --[[cache_enabled = 0,]]
+--[[name = 'WslClipboard',]]
+--[[copy = {]]
+--[[['+'] = 'clip.exe',]]
+--[[['*'] = 'clip.exe',]]
+--[[},]]
+--[[paste = {]]
+--[[['+'] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',]]
+--[[['*'] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',]]
+--[[},]]
+--[[cache_enabled = 0,]]
 --[[}]]
 vim.keymap.set('t', '<esc><esc>', '<c-\\><c-n>')
 
@@ -695,6 +692,24 @@ require('lazy').setup({
     -- Then, because we use the `opts` key (recommended), the configuration runs
     -- after the plugin has been loaded as `require(MODULE).setup(opts)`.
 
+    {
+      'nvimtools/none-ls.nvim', -- null-ls renamed to none-ls
+      event = { 'BufReadPre', 'BufNewFile' },
+      dependencies = { 'nvim-lua/plenary.nvim' },
+      config = function()
+        local null_ls = require 'null-ls'
+
+        null_ls.setup {
+          sources = {
+            -- Formatters
+            null_ls.builtins.formatting.stylua,
+            null_ls.builtins.formatting.prettier,
+            null_ls.builtins.formatting.cmake_format, -- correct name
+            filetypes = { 'javascript', 'typescript', 'javascriptreact', 'typescriptreact' },
+          },
+        }
+      end,
+    },
     { -- Useful plugin to show you pending keybinds.
       'folke/which-key.nvim',
       event = 'VimEnter', -- Sets the loading event to 'VimEnter'
@@ -1154,11 +1169,11 @@ require('lazy').setup({
               --'--compile-commands-dir=/home/kvelmuru/zephyrproject/projects/hellow_world/build',
             },
           },
-          -- gopls = {},
+          gopls = {},
           -- pyright = {},
           rust_analyzer = {},
+          ts_ls = {},
           pylsp = {},
-          robotframework_ls = {},
           -- clangd = {},
           -- gopls = {},
           -- pyright = {},
@@ -1204,6 +1219,9 @@ require('lazy').setup({
         local ensure_installed = vim.tbl_keys(servers or {})
         vim.list_extend(ensure_installed, {
           'stylua', -- Used to format Lua code
+          'prettier',
+          'cmakelang',
+          'oxlint',
         })
         require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -1496,7 +1514,7 @@ require('lazy').setup({
     --    This is the easiest way to modularize your config.
     --
     --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-   { import = 'custom.plugins' },
+    { import = 'custom.plugins' },
     --
     -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
     -- Or use telescope!
