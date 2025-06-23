@@ -904,7 +904,7 @@ require('lazy').setup({
         vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
         vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
         vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
-        vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
+        vim.keymap.set('n', '<leader>sb', builtin.buffers, { desc = '[ ] Find existing buffers' })
 
         -- Slightly advanced example of overriding default behavior and theme
         vim.keymap.set('n', '<leader>/', function()
@@ -1258,22 +1258,22 @@ require('lazy').setup({
       },
       opts = {
         notify_on_error = false,
-        format_on_save = function(bufnr)
-          -- Disable "format_on_save lsp_fallback" for languages that don't
-          -- have a well standardized coding style. You can add additional
-          -- languages here or re-enable it for the disabled ones.
-          local disable_filetypes = { c = true, cpp = true }
-          local lsp_format_opt
-          if disable_filetypes[vim.bo[bufnr].filetype] then
-            lsp_format_opt = 'never'
-          else
-            lsp_format_opt = 'fallback'
-          end
-          return {
-            timeout_ms = 500,
-            lsp_format = lsp_format_opt,
-          }
-        end,
+--[[        format_on_save = function(bufnr)]]
+          --[[-- Disable "format_on_save lsp_fallback" for languages that don't]]
+          --[[-- have a well standardized coding style. You can add additional]]
+          --[[-- languages here or re-enable it for the disabled ones.]]
+          --[[local disable_filetypes = { c = true, cpp = true }]]
+          --[[local lsp_format_opt]]
+          --[[if disable_filetypes[vim.bo[bufnr].filetype] then]]
+            --[[lsp_format_opt = 'never']]
+          --[[else]]
+            --[[lsp_format_opt = 'fallback']]
+          --[[end]]
+          --[[return {]]
+            --[[timeout_ms = 500,]]
+            --[[lsp_format = lsp_format_opt,]]
+          --[[}]]
+        --[[end,]]
         formatters_by_ft = {
           lua = { 'stylua' },
           -- Conform can also run multiple formatters sequentially
