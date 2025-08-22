@@ -128,38 +128,7 @@ local state = {
   },
 }
 
--- Auto close brackets configuration for Neovim
--- Add this to your init.lua
-
--- Simple and efficient auto-pairing system for brackets
-vim.cmd [[
-  inoremap ( ()<left>
-  inoremap { {}<left>
-  inoremap [ []<left>
-  
-  " Skip over closing brackets if they already exist
-  inoremap <expr> ) strpart(getline('.'), col('.')-1, 1) == ")" ? "\<Right>" : ")"
-  inoremap <expr> } strpart(getline('.'), col('.')-1, 1) == "}" ? "\<Right>" : "}"
-  inoremap <expr> ] strpart(getline('.'), col('.')-1, 1) == "]" ? "\<Right>" : "]"
-]]
-
--- Handle quotes separately with more sophisticated logic
-vim.cmd [[
-  " For double quotes
-  inoremap <expr> " getline('.')[col('.')-1] == '"' ? "\<Right>" : 
-                 \ getline('.')[col('.')-2] == '\' ? '"' : 
-                 \ '""<left>'
-  
-  " For single quotes
-  inoremap <expr> ' getline('.')[col('.')-1] == "'" ? "\<Right>" : 
-                 \ getline('.')[col('.')-2] == '\' ? "'" : 
-                 \ "''<left>"
-  
-  " For backticks
-  inoremap <expr> ` getline('.')[col('.')-1] == '`' ? "\<Right>" : 
-                 \ getline('.')[col('.')-2] == '\' ? '`' : 
-                 \ "``<left>"
-]]
+-- Auto-pairing is now handled by nvim-autopairs plugin in lua/custom/plugins/autopairs.lua
 
 local function create_floating_window(opts)
   opts = opts or {}
@@ -699,13 +668,40 @@ require('lazy').setup({
       config = function()
         local null_ls = require 'null-ls'
 
+        local helpers = require 'null-ls.helpers'
+        local methods = require 'null-ls.methods'
+
+        local function ruff_fix()
+          return helpers.make_builtin {
+            name = 'ruff_fix',
+            meta = {
+              url = 'https://github.com/astral-sh/ruff',
+              description = 'Ruff fixer',
+            },
+            method = methods.internal.FORMATTING,
+            filetypes = { 'python' },
+            generator_opts = {
+              command = 'ruff',
+              args = { '--fix', '-e', '-n', '--stdin-filename', '$FILENAME', '-' },
+              to_stdin = true,
+            },
+            factory = helpers.formatter_factory,
+          }
+        end
         null_ls.setup {
           sources = {
             -- Formatters
+            ruff_fix(),
+            null_ls.builtins.diagnostics.ruff,
             null_ls.builtins.formatting.stylua,
-            null_ls.builtins.formatting.prettier,
-            null_ls.builtins.formatting.cmake_format, -- correct name
-            filetypes = { 'javascript', 'typescript', 'javascriptreact', 'typescriptreact' },
+            null_ls.builtins.formatting.prettier.with {
+              filetypes = { 'javascript', 'typescript', 'javascriptreact', 'typescriptreact', 'json', 'css', 'html', 'markdown' },
+            },
+            null_ls.builtins.formatting.cmake_format,
+
+            -- Python: ruff for formatting and linting
+            --[[        null_ls.builtins.formatting.ruff,]]
+            --[[null_ls.builtins.diagnostics.ruff,]]
           },
         }
       end,
@@ -1170,13 +1166,14 @@ require('lazy').setup({
             },
           },
           gopls = {},
-          -- pyright = {},
+          ruff = {},
           rust_analyzer = {},
+          --python_lsp_server = {},
           ts_ls = {},
-          pylsp = {},
+          --pylsp = {},
           -- clangd = {},
-          -- gopls = {},
-          -- pyright = {},
+          ---- gopls = {},
+          pyright = {},
           -- rust_analyzer = {},
           -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
           --
@@ -1230,6 +1227,9 @@ require('lazy').setup({
           automatic_installation = false,
           handlers = {
             function(server_name)
+              if server_name ~= 'pylsp' then
+                require('lspconfig')[server_name].setup {}
+              end
               local server = servers[server_name] or {}
               -- This handles overriding only values explicitly passed
               -- by the server configuration above. Useful when disabling
@@ -1258,21 +1258,21 @@ require('lazy').setup({
       },
       opts = {
         notify_on_error = false,
---[[        format_on_save = function(bufnr)]]
-          --[[-- Disable "format_on_save lsp_fallback" for languages that don't]]
-          --[[-- have a well standardized coding style. You can add additional]]
-          --[[-- languages here or re-enable it for the disabled ones.]]
-          --[[local disable_filetypes = { c = true, cpp = true }]]
-          --[[local lsp_format_opt]]
-          --[[if disable_filetypes[vim.bo[bufnr].filetype] then]]
-            --[[lsp_format_opt = 'never']]
-          --[[else]]
-            --[[lsp_format_opt = 'fallback']]
-          --[[end]]
-          --[[return {]]
-            --[[timeout_ms = 500,]]
-            --[[lsp_format = lsp_format_opt,]]
-          --[[}]]
+        --[[        format_on_save = function(bufnr)]]
+        --[[-- Disable "format_on_save lsp_fallback" for languages that don't]]
+        --[[-- have a well standardized coding style. You can add additional]]
+        --[[-- languages here or re-enable it for the disabled ones.]]
+        --[[local disable_filetypes = { c = true, cpp = true }]]
+        --[[local lsp_format_opt]]
+        --[[if disable_filetypes[vim.bo[bufnr].filetype] then]]
+        --[[lsp_format_opt = 'never']]
+        --[[else]]
+        --[[lsp_format_opt = 'fallback']]
+        --[[end]]
+        --[[return {]]
+        --[[timeout_ms = 500,]]
+        --[[lsp_format = lsp_format_opt,]]
+        --[[}]]
         --[[end,]]
         formatters_by_ft = {
           lua = { 'stylua' },
