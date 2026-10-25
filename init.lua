@@ -819,6 +819,11 @@ require('lazy').setup({
         require('telescope').setup {
           -- You can put your default mappings / updates / etc. in here
           --  All the info you're looking for is in `:help telescope.setup()`
+          defaults = {
+            -- nvim-treesitter's new main branch removed the legacy parser API
+            -- used by Telescope's preview highlighter.
+            preview = { treesitter = false },
+          },
           --
           -- defaults = {
           --   mappings = {
@@ -1470,22 +1475,29 @@ require('lazy').setup({
     },
     { -- Highlight, edit, and navigate code
       'nvim-treesitter/nvim-treesitter',
+      lazy = false,
       build = ':TSUpdate',
-      main = 'nvim-treesitter.configs', -- Sets main module to use for opts
-      -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
-      opts = {
-        ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
-        -- Autoinstall languages that are not installed
-        auto_install = true,
-        highlight = {
-          enable = true,
-          -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
-          --  If you are experiencing weird indenting issues, add the language to
-          --  the list of additional_vim_regex_highlighting and disabled languages for indent.
-          additional_vim_regex_highlighting = { 'ruby' },
-        },
-        indent = { enable = true, disable = { 'ruby' } },
-      },
+      config = function()
+        local treesitter = require 'nvim-treesitter'
+        local languages = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+
+        treesitter.setup { install_dir = vim.fn.stdpath 'data' .. '/site' }
+        treesitter.install(languages)
+
+        vim.api.nvim_create_autocmd('FileType', {
+          pattern = languages,
+          callback = function()
+            vim.treesitter.start()
+          end,
+        })
+
+        vim.api.nvim_create_autocmd('FileType', {
+          pattern = { 'ruby' },
+          callback = function()
+            vim.treesitter.start()
+          end,
+        })
+      end,
       -- There are additional nvim-treesitter modules that you can use to interact
       -- with nvim-treesitter. You should go explore a few and see what interests you:
       --
