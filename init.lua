@@ -17,9 +17,10 @@ end)
 vim.opt.relativenumber = true
 vim.keymap.set('n', '<M-j>', '<cmd>cnext<CR>')
 vim.keymap.set('n', '<M-k>', '<cmd>cprev<CR>')
-vim.keymap.set('n', '-', '<cmd>Oil<CR>>')
 vim.opt.clipboard:append 'unnamedplus'
 vim.opt.showmode = false
+
+
 local function has_wayland_clipboard()
   return vim.fn.exists '$WAYLAND_DISPLAY' == 1 and vim.fn.executable 'wl-copy' == 1 and vim.fn.executable 'wl-paste' == 1
 end
@@ -532,14 +533,20 @@ require('lazy').setup({
           view_options = {
             show_hidden = true,
             natural_order = true,
-            is_always_hidden = function(name, _)
+          is_always_hidden = function(name, _)
               return name == '..' or name == '.git'
             end,
+          },
+          keymaps = {
+            ['<BS>'] = 'actions.parent',
+            ['<C-h>'] = 'actions.parent',
           },
           win_options = {
             wrap = true,
           },
         }
+        -- Set keymap after Oil is loaded
+        vim.keymap.set('n', '-', '<cmd>Oil<CR>', { desc = 'Open parent directory' })
       end,
     },
 
@@ -1382,9 +1389,11 @@ require('lazy').setup({
                 luasnip.expand_or_jump()
               end
             end, { 'i', 's' }),
-            ['<C-h>'] = cmp.mapping(function()
+            ['<C-h>'] = cmp.mapping(function(fallback)
               if luasnip.locally_jumpable(-1) then
                 luasnip.jump(-1)
+              else
+                fallback()
               end
             end, { 'i', 's' }),
 
